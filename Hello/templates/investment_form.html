@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>Investment Form</title>
+</head>
+<body class="container" style="background-color: #f8f9fa; font-family: Arial, sans-serif left:60px; ">
+    <h1>Get Investment plan according to your details</h1>
+    <form method="post" class=" container-fluid my-4">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" style="position: absolute">Get plan</button>
+    </form>
+</body>
+</html>
