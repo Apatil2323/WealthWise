@@ -19,3 +19,20 @@ class InvestmentForm(forms.Form):
     time_horizon = forms.IntegerField(label='Time Horizon (in years)', min_value=1)
     investment_type = forms.ChoiceField(label='Investment Type', choices=INVESTMENT_CHOICES)
     amount = forms.DecimalField(label='Investment Amount', min_value=0)
+
+
+# for tax feature this is code
+
+class TaxCalculatorForm(forms.Form):
+    income = forms.DecimalField(label='Annual Income', max_digits=10, decimal_places=2)
+    standard_deduction = forms.DecimalField(label='Standard Deduction', max_digits=10, decimal_places=2, required=False)
+    investments = forms.DecimalField(label='Investments (e.g., 80C, etc.)', max_digits=10, decimal_places=2, required=False)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        income = cleaned_data.get("income")
+        standard_deduction = cleaned_data.get("standard_deduction") or 0
+        investments = cleaned_data.get("investments") or 0
+
+        if income is not None and (standard_deduction < 0 or investments < 0):
+            raise forms.ValidationError("Deductions and investments cannot be negative.")

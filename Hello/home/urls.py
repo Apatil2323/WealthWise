@@ -13,5 +13,6 @@ urlpatterns = [
     path('contact/', views.contact, name='contact'),
     path('admin/', admin.site.urls),
     path('investment_plan/', views.investment_plan, name='investment_plan'),
+    path('tax_calculator/', views.tax_calculator, name="tax_calculator") 
  
     ]

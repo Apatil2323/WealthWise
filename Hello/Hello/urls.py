@@ -24,5 +24,6 @@ urlpatterns = [
     path('services/', include('home.urls')),
     path('contact/', include('home.urls') ),
     path('investment-plan/', include('home.urls')),
+    path('tax_calculator/', include('home.urls'))
     
 ]

@@ -6,6 +6,8 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.shortcuts import render
 from .forms import InvestmentForm
+from .forms import TaxCalculatorForm
+from decimal import Decimal
 
 
 # Home page view
@@ -128,3 +130,79 @@ ASSET_GROWTH_RATES = {
     'gold': 0.03,      # 3% annual growth
     'etfs': 0.10,      # 6% annual growth
 }
+
+
+#functions for tax feature
+def calculate_old_regime_tax(taxable_income):
+    # Ensure that all calculations use Decimal types
+    basic_exemption_limit = Decimal('250000')
+    lower_limit = Decimal('500000')
+    upper_limit = Decimal('1000000')
+    
+    # Calculate tax based on the old regime slabs
+    if taxable_income <= basic_exemption_limit:
+        return Decimal('0')  # No tax
+    elif taxable_income <= lower_limit:
+        tax = (taxable_income - basic_exemption_limit) * Decimal('0.05')
+    elif taxable_income <= upper_limit:
+        tax = (lower_limit - basic_exemption_limit) * Decimal('0.05') + (taxable_income - lower_limit) * Decimal('0.2')
+    else:
+        tax = (lower_limit - basic_exemption_limit) * Decimal('0.05') + (upper_limit - lower_limit) * Decimal('0.2') + (taxable_income - upper_limit) * Decimal('0.3')
+
+    return tax
+
+
+
+def calculate_new_regime_tax(taxable_income):
+    # Ensure that all calculations use Decimal types
+    basic_exemption_limit = Decimal('250000')
+    first_slab_limit = Decimal('500000')
+    second_slab_limit = Decimal('750000')
+    third_slab_limit = Decimal('1000000')
+
+    # Calculate tax based on the new regime slabs
+    if taxable_income <= basic_exemption_limit:
+        return Decimal('0')  # No tax
+    elif taxable_income <= first_slab_limit:
+        tax = (taxable_income - basic_exemption_limit) * Decimal('0.05')
+    elif taxable_income <= second_slab_limit:
+        tax = (first_slab_limit - basic_exemption_limit) * Decimal('0.05') + (taxable_income - first_slab_limit) * Decimal('0.1')
+    elif taxable_income <= third_slab_limit:
+        tax = (first_slab_limit - basic_exemption_limit) * Decimal('0.05') + \
+              (second_slab_limit - first_slab_limit) * Decimal('0.1') + \
+              (taxable_income - second_slab_limit) * Decimal('0.15')
+    else:
+        tax = (first_slab_limit - basic_exemption_limit) * Decimal('0.05') + \
+              (second_slab_limit - first_slab_limit) * Decimal('0.1') + \
+              (third_slab_limit - second_slab_limit) * Decimal('0.15') + \
+              (taxable_income - third_slab_limit) * Decimal('0.3')
+
+    return tax
+
+def tax_calculator(request):
+    result = None
+    form = TaxCalculatorForm(request.POST or None)
+
+    if form.is_valid():
+        income = form.cleaned_data['income']
+        standard_deduction = form.cleaned_data['standard_deduction'] or 0
+        investments = form.cleaned_data['investments'] or 0
+
+        # Calculate taxable income
+        taxable_income = income - standard_deduction - investments
+
+        # Calculate tax for both regimes
+        old_regime_tax = calculate_old_regime_tax(taxable_income)
+        new_regime_tax = calculate_new_regime_tax(taxable_income)
+
+        # Prepare the result to display
+        result = {
+            'taxable_income': taxable_income,
+            'income': income,
+            'standard_deduction': standard_deduction,
+            'investments': investments,
+            'old_regime_tax': old_regime_tax,
+            'new_regime_tax': new_regime_tax,
+        }
+
+    return render(request, 'tax_calculator.html', {'form': form, 'result': result})
